@@ -2,7 +2,7 @@
 
 import { TokenInput } from "@/components/TokenInput";
 import { useRouter } from "next/navigation";
-import { setCookie } from "./utils";
+import { setCookie } from "@/lib/utils";
 
 export default function Home() {
   const router = useRouter();
@@ -12,5 +12,9 @@ export default function Home() {
     router.push("/records");
   };
 
-  return <TokenInput onSubmit={handleTokenSubmit} />;
+  return (
+    <div className="bg-white py-20 px-4">
+      <TokenInput onSubmit={handleTokenSubmit} />
+    </div>
+  );
 }

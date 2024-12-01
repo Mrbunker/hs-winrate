@@ -1,10 +1,16 @@
 import { Suspense } from "react";
-import { fetchData } from "../utils/fetch";
-import { timeFormat } from "../utils";
 import { cookies } from "next/headers";
+import { timeFormat } from "@/lib/utils";
+import { fetchData } from "@/lib/fetch";
 import List from "./components/List";
+import { Tabs } from "./components/Tabs";
+import { GAME_MODES, type Mode } from "@/lib/constants";
 
-export default async function RecordsPage() {
+export default async function RecordsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get("xcxtoken")?.value;
 
@@ -12,10 +18,17 @@ export default async function RecordsPage() {
     return <div className="text-red-500">缺少 token 参数</div>;
   }
 
+  const mode = (Number((await searchParams).mode) as Mode) || GAME_MODES.WILD;
+
   const res = await fetchData({
     token,
+    params: {
+      mode,
+      page_size: 10,
+      page: 1,
+    },
   });
-  const records = res.data.list;
+  const records = res?.data?.list ?? [];
 
   const startTime = Number(records[0].finish_time);
   const endTime = Number(records[records.length - 1].finish_time);
@@ -25,12 +38,8 @@ export default async function RecordsPage() {
     <Suspense fallback={<div className="text-gray-500">加载中...</div>}>
       {records.length > 0 && (
         <div className="space-y-4">
-          <Card>
-            <p>已获取 {records.length} 条记录</p>
-          </Card>
-          <Card>
-            <p>时间：{duration}</p>
-          </Card>
+          <Header length={records.length} duration={duration} />
+
           <List records={records} />
         </div>
       )}
@@ -38,10 +47,14 @@ export default async function RecordsPage() {
   );
 }
 
-const Card = ({ children }: { children: React.ReactNode }) => {
+const Header = ({ length, duration }: { length: number; duration: string }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      {children}
+    <div className="bg-white p-4 min-h-20">
+      <div className="flex justify-between hidden">
+        <p>已获取 {length} 条记录</p>
+        <p>时间：{duration}</p>
+      </div>
+      <Tabs />
     </div>
   );
 };
